@@ -123,8 +123,8 @@ void keyPressed() {
         ballVelocityX = 5 * ballVelocityX/Math.abs(ballVelocityX);
         ballVelocityY = 5 * ballVelocityY/Math.abs(ballVelocityY);
       } else {
-        ballVelocityX = 0.2 * ballVelocityX/Math.abs(ballVelocityX);
-        ballVelocityY = 0.2 * ballVelocityY/Math.abs(ballVelocityY);
+        ballVelocityX = 2 * ballVelocityX/Math.abs(ballVelocityX);
+        ballVelocityY = 2 * ballVelocityY/Math.abs(ballVelocityY);
       }
     }
   }
@@ -194,19 +194,19 @@ void onPlay() {
 
 void onPause() {
   drawButton(resumeButton);
-  quitButton.y = 10 + resumeButton.y + resumeButton.textHeight; 
+  quitButton.y = 10 + resumeButton.y + resumeButton.textHeight;
   drawButton(quitButton);
 }
 
 void onWon() {
   drawButton(wonButton);
-  quitButton.y = 10 + wonButton.y + wonButton.textHeight; 
+  quitButton.y = 10 + wonButton.y + wonButton.textHeight;
   drawButton(quitButton);
 }
 
 void onGameOver() {
   drawButton(gameOverButton);
-  quitButton.y = 10 + gameOverButton.y + gameOverButton.textHeight; 
+  quitButton.y = 10 + gameOverButton.y + gameOverButton.textHeight;
   drawButton(quitButton);
 }
 
@@ -294,6 +294,14 @@ void reverseVelocityY() {
   ballVelocityY = -ballVelocityY;
 }
 
+boolean shouldCheckForPlayerBeamCollision() {
+  return ballLocationY + BALL_DIAMETER >= height - TOOLBAR_HEIGHT;
+}
+
+boolean shouldCheckForBrickCollision() {
+  return ballLocationY <= (BRICK_Y_GRID * BRICK_HEIGHT) + TOOLBAR_HEIGHT;
+}
+
 boolean checkForBallCollision() {
   // The ball touches the bottom horizontal wall. GAME OVER!
   if (ballLocationY + BALL_DIAMETER >= height) {
@@ -324,45 +332,49 @@ boolean checkForBallCollision() {
   }
   
   // The ball touches the player beam.
-  int playerBeamBoundary = playerBeam.isTouchingBoundary(ballLocationX, ballLocationY, BALL_DIAMETER, BALL_DIAMETER, ballVelocityX, ballVelocityY);
-  if (playerBeamBoundary == Shape.VERTICAL_BOUNDARY) {
-      // The ball touches the vertical brick.
-      // Reverse the x velocity.
-      System.out.println("Touched the vertical boundary of playerBeam");
-      reverseVelocityX();
-      return true;
-  } else if (playerBeamBoundary == Shape.HORIZONTAL_BOUNDARY) {
-      // The ball touches the horuzontal brick.
-      // Reverse the y velocity.
-      System.out.println("Touched the horizonal boundary of playerBeam");
-      reverseVelocityY();
-      return true;
+  if (shouldCheckForPlayerBeamCollision()) {
+    int playerBeamBoundary = playerBeam.isTouchingBoundary(ballLocationX, ballLocationY, BALL_DIAMETER, BALL_DIAMETER, ballVelocityX, ballVelocityY);
+    if (playerBeamBoundary == Shape.VERTICAL_BOUNDARY) {
+        // The ball touches the vertical brick.
+        // Reverse the x velocity.
+        System.out.println("Touched the vertical boundary of playerBeam");
+        reverseVelocityX();
+        return true;
+    } else if (playerBeamBoundary == Shape.HORIZONTAL_BOUNDARY) {
+        // The ball touches the horuzontal brick.
+        // Reverse the y velocity.
+        System.out.println("Touched the horizonal boundary of playerBeam");
+        reverseVelocityY();
+        return true;
+    }
   }
   
-  for (int i = 0 ; i < bricks.length; i ++) {
-    Brick brick = bricks[i];
-    if (!brick.visible) {
-      continue;
-    }
-    int boundary = brick.isTouchingBoundary(ballLocationX, ballLocationY, BALL_DIAMETER, BALL_DIAMETER, ballVelocityX, ballVelocityY);
-    if (boundary == Shape.VERTICAL_BOUNDARY) {
-      // The ball touches the vertical brick.
-      // Reverse the x velocity.
-      System.out.println("Touched the vertical boundary of brick at index: " + i);
-      reverseVelocityX();
-      // Remove the brick.
-      brick.visible = false;
-      score += 1;
-      return true;
-    } else if (boundary == Shape.HORIZONTAL_BOUNDARY) {
-      // The ball touches the horuzontal brick.
-      // Reverse the y velocity.
-      System.out.println("Touched the horizonal boundary of brick at index: " + i);
-      reverseVelocityY();
-      // Remove the brick.
-      brick.visible = false;
-      score += 1;
-      return true;
+  if (shouldCheckForBrickCollision()) {
+    for (int i = 0 ; i < bricks.length; i ++) {
+      Brick brick = bricks[i];
+      if (!brick.visible) {
+        continue;
+      }
+      int boundary = brick.isTouchingBoundary(ballLocationX, ballLocationY, BALL_DIAMETER, BALL_DIAMETER, ballVelocityX, ballVelocityY);
+      if (boundary == Shape.VERTICAL_BOUNDARY) {
+        // The ball touches the vertical brick.
+        // Reverse the x velocity.
+        System.out.println("Touched the vertical boundary of brick at index: " + i);
+        reverseVelocityX();
+        // Remove the brick.
+        brick.visible = false;
+        score += 1;
+        return true;
+      } else if (boundary == Shape.HORIZONTAL_BOUNDARY) {
+        // The ball touches the horuzontal brick.
+        // Reverse the y velocity.
+        System.out.println("Touched the horizonal boundary of brick at index: " + i);
+        reverseVelocityY();
+        // Remove the brick.
+        brick.visible = false;
+        score += 1;
+        return true;
+      }
     }
   }
   
