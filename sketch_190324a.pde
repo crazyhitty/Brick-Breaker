@@ -131,25 +131,25 @@ void keyPressed() {
 }
 
 void mouseClicked() {
-  if (playButton.isMouseInBounds(mouseX, mouseY)) {
+  if (gameState == GAME_STATE_INITIAL && playButton.isMouseInBounds(mouseX, mouseY)) {
     System.out.println("Play button clicked");
     invalidateScore();
     this.gameState = GAME_STATE_PLAYING;
-  } else if (quitButton.isMouseInBounds(mouseX, mouseY)) {
+  } else if (gameState != GAME_STATE_PLAYING && quitButton.isMouseInBounds(mouseX, mouseY)) {
     System.out.println("Quit button clicked");
     exit();    
-  } else if (pauseButton.isMouseInBounds(mouseX, mouseY)) {
+  } else if (gameState == GAME_STATE_PLAYING && pauseButton.isMouseInBounds(mouseX, mouseY)) {
     System.out.println("Pause button clicked");
     this.gameState = GAME_STATE_PAUSED;
-  } else if (resumeButton.isMouseInBounds(mouseX, mouseY)) {
+  } else if (gameState == GAME_STATE_PAUSED && resumeButton.isMouseInBounds(mouseX, mouseY)) {
     System.out.println("Resume button clicked");
     this.gameState = GAME_STATE_PLAYING;
-  } else if (gameOverButton.isMouseInBounds(mouseX, mouseY)) {
+  } else if (gameState == GAME_STATE_GAME_OVER && gameOverButton.isMouseInBounds(mouseX, mouseY)) {
     System.out.println("Game over button clicked");
     setup();
     invalidateScore();
     this.gameState = GAME_STATE_PLAYING;
-  } else if (wonButton.isMouseInBounds(mouseX, mouseY)) {
+  } else if (gameState == GAME_STATE_WON && wonButton.isMouseInBounds(mouseX, mouseY)) {
     System.out.println("Won button clicked");
     setup();
     invalidateScore();
