@@ -119,12 +119,12 @@ void keyPressed() {
     }
   } else {
     if (key == ' ') {
-      if (ballVelocityX == 0.1) {
+      if (Math.abs(ballVelocityX) == 2) {
         ballVelocityX = 5 * ballVelocityX/Math.abs(ballVelocityX);
         ballVelocityY = 5 * ballVelocityY/Math.abs(ballVelocityY);
       } else {
-        ballVelocityX = 0.1 * ballVelocityX/Math.abs(ballVelocityX);
-        ballVelocityY = 0.1 * ballVelocityY/Math.abs(ballVelocityY);
+        ballVelocityX = 0.2 * ballVelocityX/Math.abs(ballVelocityX);
+        ballVelocityY = 0.2 * ballVelocityY/Math.abs(ballVelocityY);
       }
     }
   }
@@ -295,22 +295,32 @@ void reverseVelocityY() {
 }
 
 boolean checkForBallCollision() {
-  // The ball touches the vertical wall.
+  // The ball touches the bottom horizontal wall. GAME OVER!
+  if (ballLocationY + BALL_DIAMETER >= height) {
+    this.gameState = GAME_STATE_GAME_OVER;
+    //return true;
+  }
+  
+  boolean touchesVerticalWall = false;
+  boolean touchesHorizontalWall = false;
   if (ballLocationX <= 0 || ballLocationX + BALL_DIAMETER >= width) {
-    reverseVelocityX();
-    return true;
+    System.out.println("Touched the vertical wall");
+    touchesVerticalWall = true;
   }
   
   // The ball touches the top horizontal wall.
   if (ballLocationY <= TOOLBAR_HEIGHT) {
-    reverseVelocityY();
-    return true;
+    System.out.println("Touched the top horizontal wall");
+    touchesHorizontalWall = true;
   }
   
-  // The ball touches the bottom horizontal wall. GAME OVER!
-  if (ballLocationY + BALL_DIAMETER >= height) {
-    this.gameState = GAME_STATE_GAME_OVER;
-    return true;
+  if (touchesVerticalWall && touchesHorizontalWall) {
+    reverseVelocityX();
+    reverseVelocityY();
+  } else if (touchesVerticalWall) {
+    reverseVelocityX();
+  } else if (touchesHorizontalWall) {
+    reverseVelocityY();
   }
   
   // The ball touches the player beam.
