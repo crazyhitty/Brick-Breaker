@@ -27,44 +27,134 @@ int gameState = GAME_STATE_INITIAL;
 Button playButton, resumeButton, quitButton, pauseButton, scoreButton, gameOverButton, wonButton;
 int score = 0;
 
+//****************SCENE SETUP*******************//
+
 void setup() {
   // Canvas size.
   size(800, 600);
   
-  initializeDefaults();
-  
-  playButton = new Button("PLAY", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), this);
-  resumeButton = new Button("RESUME", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), this);
-  quitButton = new Button("QUIT", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), this);
-  gameOverButton = new Button("GAME OVER, RESTART?", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), this);
-  wonButton = new Button("YOU WON, RESTART?", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), this);
-  pauseButton = new Button("PAUSE", 20, LEFT, 10, TOOLBAR_HEIGHT, new Color(255, 255, 255), this);
-  pauseButton.y = TOOLBAR_HEIGHT / 2f + pauseButton.textHeight / 2;
-  scoreButton = new Button("SCORE: ",20, LEFT, width, TOOLBAR_HEIGHT / 2f, new Color(255, 255, 255), this);
-  scoreButton.y = TOOLBAR_HEIGHT / 2f + scoreButton.textHeight / 2;
-  scoreButton.x -= (scoreButton.textWidth + 10);
+  // Setup scene.
+  setupPlayerBeam();
+  setupBall();
+  setupBricks();
+  setupButtons();
 }
 
-void initializeDefaults() {
+void setupPlayerBeam() {
   // Initially, beam will be center aligned horizontally.
   playerBeam.x = (width / 2) - (BEAM_WIDTH / 2);
   playerBeam.y = height - BEAM_HEIGHT;
   playerBeam.height = BEAM_HEIGHT;
   playerBeam.width = BEAM_WIDTH;
+}
+
+void setupBall() {
   // Initially, ball will be one top of player beam and center aligned horizontally.
-  ballLocationX = width / 2;
-  ballLocationY = height - (BEAM_HEIGHT + (BALL_DIAMETER / 2));
+  ballLocationX = width / 2 - BALL_DIAMETER / 2;
+  ballLocationY = height - (BEAM_HEIGHT + BALL_DIAMETER);
   ballVelocityX = 2;
   ballVelocityY = -2;
-  // Create all bricks.
-  bricks = createAllBricks();
 }
+
+void setupBricks() {
+  int brickWidth = width / BRICK_X_GRID;
+  Brick[] bricks = new Brick[BRICK_X_GRID * BRICK_Y_GRID];
+  
+  for (int i = 0; i < bricks.length; i ++) {
+    int row = i / BRICK_X_GRID;
+    int column = i % BRICK_X_GRID;
+    Brick brick = new Brick();
+    brick.x = column * brickWidth;
+    brick.y = TOOLBAR_HEIGHT + row * BRICK_HEIGHT;
+    brick.width = brickWidth;
+    brick.height = BRICK_HEIGHT;
+    brick.visible = true;
+    bricks[i] = brick;
+  }
+  
+  this.bricks = bricks;
+}
+
+void setupButtons() {
+  playButton = new Button("PLAY", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), true, this);
+
+  resumeButton = new Button("RESUME", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), true, this);
+
+  quitButton = new Button("QUIT", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), true, this);
+
+  gameOverButton = new Button("GAME OVER, RESTART?", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), true, this);
+
+  wonButton = new Button("YOU WON, RESTART?", 32, CENTER, width / 2f, height / 2f, new Color(255, 255, 255), true, this);
+
+  pauseButton = new Button("PAUSE", 20, LEFT, 10, TOOLBAR_HEIGHT, new Color(255, 255, 255), true, this);
+  pauseButton.y = TOOLBAR_HEIGHT / 2f + pauseButton.textHeight / 2;
+
+  scoreButton = new Button("SCORE: ",20, LEFT, width, TOOLBAR_HEIGHT / 2f, new Color(255, 255, 255), false, this);
+  scoreButton.y = TOOLBAR_HEIGHT / 2f + scoreButton.textHeight / 2;
+  scoreButton.x -= (scoreButton.textWidth + 10);
+}
+
+//****************SCENE SETUP END*******************//
+
+
+//****************GAME LOGIC*******************//
 
 void draw() {
   background(0,0,0);
-  //ballVelocityX = (Math.abs(ballVelocityX) + 0.1) * (ballVelocityX / Math.abs(ballVelocityX));
-  //ballVelocityY = (Math.abs(ballVelocityY) + 0.1) * (ballVelocityY / Math.abs(ballVelocityY));
   handleGameState(gameState);
+}
+
+void keyPressed() {
+  if (gameState != GAME_STATE_PLAYING) {
+    return;
+  }
+  
+  if (key == CODED) {
+    if (keyCode == LEFT) {
+      // Player presses left arrow key.
+      movePlayer(playerBeam.x - 30);
+    } else if (keyCode == RIGHT) {
+      // Player presses right arrow key.
+      movePlayer(playerBeam.x + 30);
+    }
+  } else {
+    if (key == ' ') {
+      if (ballVelocityX == 0.1) {
+        ballVelocityX = 5 * ballVelocityX/Math.abs(ballVelocityX);
+        ballVelocityY = 5 * ballVelocityY/Math.abs(ballVelocityY);
+      } else {
+        ballVelocityX = 0.1 * ballVelocityX/Math.abs(ballVelocityX);
+        ballVelocityY = 0.1 * ballVelocityY/Math.abs(ballVelocityY);
+      }
+    }
+  }
+}
+
+void mouseClicked() {
+  if (playButton.isMouseInBounds(mouseX, mouseY)) {
+    System.out.println("Play button clicked");
+    invalidateScore();
+    this.gameState = GAME_STATE_PLAYING;
+  } else if (quitButton.isMouseInBounds(mouseX, mouseY)) {
+    System.out.println("Quit button clicked");
+    exit();    
+  } else if (pauseButton.isMouseInBounds(mouseX, mouseY)) {
+    System.out.println("Pause button clicked");
+    this.gameState = GAME_STATE_PAUSED;
+  } else if (resumeButton.isMouseInBounds(mouseX, mouseY)) {
+    System.out.println("Resume button clicked");
+    this.gameState = GAME_STATE_PLAYING;
+  } else if (gameOverButton.isMouseInBounds(mouseX, mouseY)) {
+    System.out.println("Game over button clicked");
+    setup();
+    invalidateScore();
+    this.gameState = GAME_STATE_PLAYING;
+  } else if (wonButton.isMouseInBounds(mouseX, mouseY)) {
+    System.out.println("Won button clicked");
+    setup();
+    invalidateScore();
+    this.gameState = GAME_STATE_PLAYING;
+  }
 }
 
 void handleGameState(int gameState) {
@@ -94,10 +184,10 @@ void onPlay() {
     return;
   }
   fill(255, 255, 255);
+  drawBricks();
+  drawPlayerBeam();
+  drawBall();
   drawToolBar();
-  drawAllBricks();
-  createPlayerBeam();
-  createBall();
   animateBall();
   checkForBallCollision();
 }
@@ -120,6 +210,10 @@ void onGameOver() {
   drawButton(quitButton);
 }
 
+void invalidateScore() {
+  score = 0;
+}
+
 void setAllButtonsInvisible() {
   playButton.visible = false;
   resumeButton.visible = false;
@@ -128,22 +222,6 @@ void setAllButtonsInvisible() {
   scoreButton.visible = false;
   gameOverButton.visible = false;
   wonButton.visible = false;
-}
-
-void keyPressed() {
-  if (gameState != GAME_STATE_PLAYING) {
-    return;
-  }
-  
-  if (key == CODED) {
-    if (keyCode == LEFT) {
-      // Player presses left arrow key.
-      movePlayer(playerBeam.x - 30);
-    } else if (keyCode == RIGHT) {
-      // Player presses right arrow key.
-      movePlayer(playerBeam.x + 30);
-    }
-  }
 }
 
 void movePlayer(float xPosition) {
@@ -157,43 +235,16 @@ void drawButton(Button button) {
   button.visible = true;
   textSize(button.textSize);
   textAlign(button.alignment);
-  //button.textWidth = textWidth(button.text);
-  //button.textHeight = textAscent() * 0.8;
-  text(button.text, button.x, button.y);
   fill(button.buttonColor.r, button.buttonColor.g, button.buttonColor.b);
+  text(button.text, button.x, button.y);
+  fill(255, 255, 255);
   
   // Highlight button if mouse is hovered over it.
-  //if (button.isMouseInBounds(mouseX, mouseY)) {
-  //  button.buttonColor.update(125, 125, 125);
-  //} else {
-  //  button.buttonColor.update(255, 255, 255);
-  //}
-}
-
-void mouseClicked() {
-  if (playButton.isMouseInBounds(mouseX, mouseY)) {
-    System.out.println("Play button clicked");
-    score = 0;
-    this.gameState = GAME_STATE_PLAYING;
-  } else if (quitButton.isMouseInBounds(mouseX, mouseY)) {
-    System.out.println("Quit button clicked");
-    exit();    
-  } else if (pauseButton.isMouseInBounds(mouseX, mouseY)) {
-    System.out.println("Pause button clicked");
-    this.gameState = GAME_STATE_PAUSED;
-  } else if (resumeButton.isMouseInBounds(mouseX, mouseY)) {
-    System.out.println("Resume button clicked");
-    this.gameState = GAME_STATE_PLAYING;
-  } else if (gameOverButton.isMouseInBounds(mouseX, mouseY)) {
-    System.out.println("Game over button clicked");
-    initializeDefaults();
-    score = 0;
-    this.gameState = GAME_STATE_PLAYING;
-  } else if (wonButton.isMouseInBounds(mouseX, mouseY)) {
-    System.out.println("Won button clicked");
-    initializeDefaults();
-    score = 0;
-    this.gameState = GAME_STATE_PLAYING;
+  if (button.isMouseInBounds(mouseX, mouseY) && button.shouldHighlight) {
+    System.out.println("Highlighting button with text: " + button.text);
+    button.buttonColor.update(125, 125, 125);
+  } else {
+    button.buttonColor.update(255, 255, 255);
   }
 }
 
@@ -207,27 +258,7 @@ void drawToolBar() {
   stroke(0, 0, 0);
 }
 
-// Create all bricks
-Brick[] createAllBricks() {
-  int brickWidth = width / BRICK_X_GRID;
-  Brick[] bricks = new Brick[BRICK_X_GRID * BRICK_Y_GRID];
-  
-  for (int i = 0; i < bricks.length; i ++) {
-    int row = i / BRICK_X_GRID;
-    int column = i % BRICK_X_GRID;
-    Brick brick = new Brick();
-    brick.x = column * brickWidth;
-    brick.y = TOOLBAR_HEIGHT + row * BRICK_HEIGHT;
-    brick.width = brickWidth;
-    brick.height = BRICK_HEIGHT;
-    brick.visible = true;
-    bricks[i] = brick;
-  }
-  
-  return bricks;
-}
-
-void drawAllBricks() {
+void drawBricks() {
   for (int i = 0; i < bricks.length; i ++) {
     Brick brick = bricks[i];
     if (brick.visible) {
@@ -241,13 +272,13 @@ void drawBrick(float x, float y, float width, float height) {
   rect(x, y, width, height);
 }
 
-void createPlayerBeam() {
+void drawPlayerBeam() {
   // The beam will always stick to bottom of the canvas.
   rect(playerBeam.x, playerBeam.y, playerBeam.width, playerBeam.height);
 }
 
-void createBall() {
-  circle(ballLocationX, ballLocationY, BALL_DIAMETER);
+void drawBall() {
+  rect(ballLocationX, ballLocationY, BALL_DIAMETER, BALL_DIAMETER);
 }
 
 void animateBall() {
@@ -255,58 +286,60 @@ void animateBall() {
   ballLocationY += ballVelocityY;
 }
 
-void reverseVelocities() {
-  
+void reverseVelocityX() {
+  ballVelocityX = -ballVelocityX;
+}
+
+void reverseVelocityY() {
+  ballVelocityY = -ballVelocityY;
 }
 
 boolean checkForBallCollision() {
   // The ball touches the vertical wall.
-  if ((ballLocationX - (BALL_DIAMETER / 2)) <= 0 || (ballLocationX + (BALL_DIAMETER / 2)) >= width) {
-    // Reverse the x velocity.
-    ballVelocityX = -ballVelocityX;
+  if (ballLocationX <= 0 || ballLocationX + BALL_DIAMETER >= width) {
+    reverseVelocityX();
     return true;
   }
   
   // The ball touches the top horizontal wall.
-  if ((ballLocationY - (BALL_DIAMETER / 2)) <= TOOLBAR_HEIGHT) {
-    // Reverse the y velocity.
-    ballVelocityY = -ballVelocityY;
+  if (ballLocationY <= TOOLBAR_HEIGHT) {
+    reverseVelocityY();
     return true;
   }
   
   // The ball touches the bottom horizontal wall. GAME OVER!
-  if ((ballLocationY + (BALL_DIAMETER / 2)) >= height) {
+  if (ballLocationY + BALL_DIAMETER >= height) {
     this.gameState = GAME_STATE_GAME_OVER;
     return true;
   }
   
   // The ball touches the player beam.
-  int playerBeamBoundary = playerBeam.isTouchingBoundary(ballLocationX - (BALL_DIAMETER / 2), ballLocationY - (BALL_DIAMETER / 2), BALL_DIAMETER, BALL_DIAMETER);
+  int playerBeamBoundary = playerBeam.isTouchingBoundary(ballLocationX, ballLocationY, BALL_DIAMETER, BALL_DIAMETER, ballVelocityX, ballVelocityY);
   if (playerBeamBoundary == Shape.VERTICAL_BOUNDARY) {
       // The ball touches the vertical brick.
       // Reverse the x velocity.
       System.out.println("Touched the vertical boundary of playerBeam");
-      ballVelocityX = -ballVelocityX;
+      reverseVelocityX();
       return true;
   } else if (playerBeamBoundary == Shape.HORIZONTAL_BOUNDARY) {
       // The ball touches the horuzontal brick.
       // Reverse the y velocity.
       System.out.println("Touched the horizonal boundary of playerBeam");
-      ballVelocityY = -ballVelocityY;
+      reverseVelocityY();
       return true;
-    }
+  }
   
   for (int i = 0 ; i < bricks.length; i ++) {
     Brick brick = bricks[i];
     if (!brick.visible) {
       continue;
     }
-    int boundary = brick.isTouchingBoundary(ballLocationX - (BALL_DIAMETER / 2), ballLocationY - (BALL_DIAMETER / 2), BALL_DIAMETER, BALL_DIAMETER);
+    int boundary = brick.isTouchingBoundary(ballLocationX, ballLocationY, BALL_DIAMETER, BALL_DIAMETER, ballVelocityX, ballVelocityY);
     if (boundary == Shape.VERTICAL_BOUNDARY) {
       // The ball touches the vertical brick.
       // Reverse the x velocity.
       System.out.println("Touched the vertical boundary of brick at index: " + i);
-      ballVelocityX = -ballVelocityX;
+      reverseVelocityX();
       // Remove the brick.
       brick.visible = false;
       score += 1;
@@ -315,7 +348,7 @@ boolean checkForBallCollision() {
       // The ball touches the horuzontal brick.
       // Reverse the y velocity.
       System.out.println("Touched the horizonal boundary of brick at index: " + i);
-      ballVelocityY = -ballVelocityY;
+      reverseVelocityY();
       // Remove the brick.
       brick.visible = false;
       score += 1;
@@ -355,17 +388,83 @@ static class Shape {
   float height;
   boolean visible;
   
-  int isTouchingBoundary(float x, float y, float width, float height) {
+  int isTouchingBoundary(float x, float y, float width, float height, float xVelocity, float yVelocity) {
+    boolean touchesVerticalBoundary = false;
+    boolean touchesHorizontalBoundary = false;
     if ((this.x > x && this.x - (x + width) <= 0) || ((x + width) > (this.x + this.width)) && (x - (this.x + this.width) <= 0)) {
       if ((this.y <= y && y <= (this.y + this.height)) || (this.y <= (y + height) && (y + height) <= (this.y + this.height))) {
-          return VERTICAL_BOUNDARY;
+        touchesVerticalBoundary = true;
       }
     }
     
     if ((this.y > y && this.y - (y + height) <= 0) || ((y + height) > (this.y + this.height)) && (y - (this.y + this.height) <= 0)) {
       if ((this.x <= x && x <= (this.x + this.width)) || (this.x <= (x + width) && (x + width) <= (this.x + this.width))) {
-          return HORIZONTAL_BOUNDARY;
+        touchesHorizontalBoundary = true;
       }
+    }
+    
+    if (touchesVerticalBoundary && touchesHorizontalBoundary) {
+      float heightIntersect = 0;
+      float widthIntersect = 0;
+      if (y <= this.y && y + height >= this.y + this.height) {
+        heightIntersect = this.height;
+      } else if (y <= this.y) {
+        heightIntersect = (y + height) - this.y;
+      } else if (y + height >= this.y + this.height) {
+        heightIntersect = y - (this.y + height);
+      }
+      if (x <= this.x && x + width >= this.x + this.width) {
+        widthIntersect = this.width;
+      } else if (x <= this.x) {
+        widthIntersect = (x + width) - this.x;
+      } else if (x + width >= this.x + this.width) {
+        widthIntersect = x - (this.x + width);
+      }
+      
+      int quadrant = -1;
+      if (xVelocity < 0 && yVelocity > 0) {
+        quadrant = 0;
+      } else if (xVelocity > 0 && yVelocity > 0) {
+        quadrant = 1;
+      } else if (xVelocity > 0 && yVelocity < 0) {
+        quadrant = 2;
+      } else if (xVelocity < 0 && yVelocity < 0) {
+        quadrant = 3;
+      }
+      
+      if (x < this.x && y < this.y) {
+        // First corner.
+        switch(quadrant) {
+          case 0: return HORIZONTAL_BOUNDARY; 
+          case 1: return heightIntersect > widthIntersect ? VERTICAL_BOUNDARY : HORIZONTAL_BOUNDARY;
+          case 2: return VERTICAL_BOUNDARY;
+        }
+      } else if ((x + width) > (this.x + this.width) && y < this.y) {
+        // Second corner.
+        switch(quadrant) {
+          case 0: return heightIntersect > widthIntersect ? VERTICAL_BOUNDARY : HORIZONTAL_BOUNDARY;
+          case 1: return HORIZONTAL_BOUNDARY;
+          case 3: return VERTICAL_BOUNDARY;
+        }
+      } else if (x < this.x && (y + height) > (this.y + this.height)) {
+        // Third corner.
+        switch(quadrant) {
+          case 1: return VERTICAL_BOUNDARY; 
+          case 2: return heightIntersect > widthIntersect ? VERTICAL_BOUNDARY : HORIZONTAL_BOUNDARY;
+          case 3: return HORIZONTAL_BOUNDARY;
+        }
+      } else if ((x + width) > (this.x + this.width) && (y + height) > (this.y + this.height)) {
+        // Fourth corner.
+        switch(quadrant) {
+          case 0: return VERTICAL_BOUNDARY; 
+          case 2: return HORIZONTAL_BOUNDARY;
+          case 3: return heightIntersect > widthIntersect ? VERTICAL_BOUNDARY : HORIZONTAL_BOUNDARY;
+        }
+      }
+    } else if (touchesVerticalBoundary) {
+      return VERTICAL_BOUNDARY;
+    } else if (touchesHorizontalBoundary) {
+      return HORIZONTAL_BOUNDARY;
     }
     
     return NO_BOUNDARY;
@@ -382,13 +481,15 @@ static class Button {
   int textSize, alignment;
   float x, y, textWidth, textHeight;
   Color buttonColor;
+  boolean shouldHighlight;
   
-  Button (String text, int textSize, int alignment, float x, float y, Color buttonColor, PApplet pa) {
+  Button (String text, int textSize, int alignment, float x, float y, Color buttonColor, boolean shouldHighlight, PApplet pa) {
     this.textSize = textSize;
     this.alignment = alignment;
     this.x = x;
     this.y = y;
     this.buttonColor = buttonColor;
+    this.shouldHighlight = shouldHighlight;
     
     calculateBounds(text, pa);
   }
@@ -436,6 +537,4 @@ static class Color {
   }
 }
 
-static boolean intersects(float x1, float y1, float width1, float height1, float x2, float y2, float width2, float height2) {
-  return x1 < x2 + width2 && x1 + width1 > x2 && y1 < y2 + height2 && y1 + height1 > y2;
-}
+//****************GAME LOGIC EMD*******************//
