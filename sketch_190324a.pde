@@ -17,6 +17,9 @@ private static final int GAME_STATE_PAUSED = 2;
 private static final int GAME_STATE_WON = 3;
 private static final int GAME_STATE_GAME_OVER = 4;
 
+// FPS
+private static final int FPS_LOCK = 60;
+
 float ballLocationX = 0;
 float ballLocationY = 0;
 float ballVelocityX = 2;
@@ -24,7 +27,7 @@ float ballVelocityY = -2;
 Brick bricks[];
 PlayerBeam playerBeam = new PlayerBeam();
 int gameState = GAME_STATE_INITIAL;
-Button playButton, resumeButton, quitButton, pauseButton, scoreButton, gameOverButton, wonButton;
+Button playButton, resumeButton, quitButton, pauseButton, scoreButton, gameOverButton, wonButton, fpsCounterButton;
 int score = 0;
 
 //****************SCENE SETUP*******************//
@@ -32,6 +35,7 @@ int score = 0;
 void setup() {
   // Canvas size.
   size(800, 600);
+  frameRate(FPS_LOCK);
   
   // Setup scene.
   setupPlayerBeam();
@@ -88,8 +92,11 @@ void setupButtons() {
 
   pauseButton = new Button("PAUSE", 20, LEFT, 10, TOOLBAR_HEIGHT, new Color(255, 255, 255), true, this);
   pauseButton.y = TOOLBAR_HEIGHT / 2f + pauseButton.textHeight / 2;
+  
+  fpsCounterButton = new Button("FPS", 20, CENTER, width / 2f, TOOLBAR_HEIGHT, new Color(255, 255, 255), true, this);
+  fpsCounterButton.y = TOOLBAR_HEIGHT / 2f + fpsCounterButton.textHeight / 2;
 
-  scoreButton = new Button("SCORE: ",20, LEFT, width, TOOLBAR_HEIGHT / 2f, new Color(255, 255, 255), false, this);
+  scoreButton = new Button("SCORE", 20, LEFT, 10, TOOLBAR_HEIGHT, new Color(255, 255, 255), true, this);
   scoreButton.y = TOOLBAR_HEIGHT / 2f + scoreButton.textHeight / 2;
   scoreButton.x -= (scoreButton.textWidth + 10);
 }
@@ -250,9 +257,14 @@ void drawButton(Button button) {
 
 void drawToolBar() {
   drawButton(pauseButton);
+
+  fpsCounterButton.calculateBounds("FPS: " + frameRate, this);
+  drawButton(fpsCounterButton);
+
   scoreButton.calculateBounds("SCORE: " + score, this);
   scoreButton.x = width - (scoreButton.textWidth + 10);
   drawButton(scoreButton);
+
   stroke(255, 255, 255);
   line(0, TOOLBAR_HEIGHT, width, TOOLBAR_HEIGHT);
   stroke(0, 0, 0);
