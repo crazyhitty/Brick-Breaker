@@ -2,6 +2,8 @@
 
 A simple brick breaker game written in java using [processing 3](https://processing.org/).
 
+![](.github/game-screenshot.png)
+
 ## Usage
 
 1. Clone the repository.
